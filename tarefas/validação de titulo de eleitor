@@ -1,0 +1,8 @@
+def validar_titulo(titulo):
+
+    titulo = titulo.strip()
+
+    if not titulo.isdigit() or len(titulo) != 12:
+        return False
+
+    return True
