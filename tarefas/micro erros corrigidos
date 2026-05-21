@@ -1,3 +1,4 @@
 "foi adicionado um:" return menu_urna() ", abrindo automaticamente o menu da urna após a abertura de sistema como solicitado anteriormente, ao encerrar o sistema ele volta ao menu principal."
 "os candidatos não aparecem mais na urna na hora de votar(prints apagados)." 
 "agora o protocolo segue o padrão(anteriormente o ano não aparecia agora ele aparece):" 
+"ao encerrar o sistema não da mais erro, ele volta ao menu principal, problema resolvido com return"
