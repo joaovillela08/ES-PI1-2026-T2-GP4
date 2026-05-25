@@ -1,0 +1,57 @@
+#fiz a criptografia, aproximadamente 2 horas, usei tutorial de codigo de hill e tutorial de criptografia em python.
+
+import string
+import math
+
+simbolos = " " + string.punctuation + string.digits + string.ascii_letters
+modulo = len(simbolos)
+
+chave = [[3, 5], [2, 7]]
+
+def chave_funciona(chave):
+    det = (chave[0][0] * chave[1][1] - chave[0][1] * chave[1][0]) % modulo
+
+    if math.gcd(det, modulo) == 1:
+        return True
+    else:
+        return False
+
+def criptografar(mensagem, m):
+    if len(mensagem) % 2 != 0:
+        mensagem += " "
+
+    resultado = ""
+
+    for i in range(0, len(mensagem), 2):
+        p1 = simbolos.index(mensagem[i])
+        p2 = simbolos.index(mensagem[i + 1])
+
+        novo1 = (m[0][0] * p1 + m[0][1] * p2) % modulo
+        novo2 = (m[1][0] * p1 + m[1][1] * p2) % modulo
+
+        resultado += simbolos[novo1]
+        resultado += simbolos[novo2]
+
+    return resultado
+
+def descriptografar(cifrado, m):
+    det = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) % modulo
+    inverso = pow(det, -1, modulo)
+
+    matriz_inversa = [
+        [(inverso * m[1][1]) % modulo, (-inverso * m[0][1]) % modulo],
+        [(-inverso * m[1][0]) % modulo, (inverso * m[0][0]) % modulo]
+    ]
+
+    return criptografar(cifrado, matriz_inversa)
+
+if not chave_funciona(chave):
+    print("Chave inválida!")
+else:
+    mensagem = input("Mensagem para criptografar: ")
+
+    criptografada = criptografar(mensagem, chave)
+    print("Criptografada:", criptografada)
+
+    original = descriptografar(criptografada, chave)
+    print("Descriptografada automaticamente:", original)
