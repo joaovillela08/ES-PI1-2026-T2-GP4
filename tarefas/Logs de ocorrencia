@@ -1,0 +1,55 @@
+ARQUIVO_LOG = "logs_ocorrencias.txt"
+
+
+def registrar_log(mensagem):
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(ARQUIVO_LOG, "a", encoding="utf-8") as log:
+        log.write(f"[{timestamp}] {mensagem}\n")
+
+
+def exibir_logs():
+
+    print("\n--- ACESSO AOS LOGS ---")
+
+    eleitor = buscar_eleitor(
+        input("Título de eleitor: "),
+        input("4 primeiros dígitos do CPF: "),
+        input("Chave de acesso: ")
+    )
+
+    if not eleitor:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado aos logs"
+        )
+
+        print("Dados inválidos.")
+        return
+
+    if not eleitor["mesario"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso não autorizado aos logs"
+        )
+
+        print("Apenas mesários podem acessar os logs.")
+        return
+
+    print("\n--- LOGS DE OCORRÊNCIAS ---")
+
+    try:
+
+        with open(ARQUIVO_LOG, "r", encoding="utf-8") as log:
+
+            conteudo = log.read()
+
+            if conteudo.strip() == "":
+                print("Nenhum log registrado.")
+            else:
+                print(conteudo)
+
+    except FileNotFoundError:
+
+        print("Arquivo de logs não encontrado.")
