@@ -1,0 +1,53 @@
+def abrir_sistema():
+
+    global votacao_aberta, zeresima_realizada
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("DELETE FROM voto")
+    cursor.execute("UPDATE eleitores SET status_voto = 0")
+
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+    print("\n--- ABERTURA DO SISTEMA ---")
+
+    eleitor = buscar_eleitor(
+        input("Título de eleitor: "),
+        input("4 primeiros dígitos do CPF: "),
+        input("Chave de acesso: ")
+    )
+
+    if not eleitor:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Erro de validação.")
+        return
+
+    if not eleitor["mesario"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Apenas mesários podem abrir o sistema.")
+        return
+
+    for c in candidatos.values():
+        c["votos"] = 0
+
+    votacao_aberta = True
+    zeresima_realizada = True
+
+    registrar_log(
+        "ABERTURA: Votação iniciada com sucesso."
+    )
+
+    print("Sistema aberto com sucesso!")
+    return menu_urna()
