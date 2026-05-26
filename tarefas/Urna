@@ -1,0 +1,75 @@
+def menu_urna():
+
+    if not zeresima_realizada:
+        print("Erro: Zerésima não realizada.")
+        return
+
+    if not votacao_aberta:
+        print("Sistema fechado.")
+        return
+
+    while True:
+
+        print("""
+--- URNA ---
+1 - Votar
+2 - Encerrar Sistema
+0 - Voltar
+""")
+
+        op = input("Escolha: ")
+
+        if op == "1":
+
+            realizar_voto()
+
+        elif op == "2":
+
+            encerrar_sistema()
+
+            if not votacao_aberta:
+                break
+
+        elif op == "0":
+
+            break
+
+        else:
+
+            print("Opção inválida.")
+
+
+# ================= MENU VOTAÇÃO =================
+
+def menu_votacao():
+
+    while True:
+
+        print("""
+--- MENU VOTAÇÃO ---
+1 - Abrir Sistema
+2 - Auditoria
+3 - Acessar Urna
+4 - Exibir Logs
+0 - Voltar
+""")
+
+        op = input("Escolha: ")
+
+        if op == "1":
+            abrir_sistema()
+
+        elif op == "2":
+            auditoria()
+
+        elif op == "3":
+            menu_urna()
+
+        elif op == "4":
+            exibir_logs()
+
+        elif op == "0":
+            break
+
+        else:
+            print("Opção inválida.")
