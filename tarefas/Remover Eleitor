@@ -1,0 +1,33 @@
+def remover_eleitor():
+
+    print("\n--- REMOVER ELEITOR ---")
+
+    titulo = input("Título de eleitor: ").strip()
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute(
+        "SELECT id FROM eleitores WHERE titulo_eleitor=%s",
+        (titulo,)
+    )
+
+    resultado = cursor.fetchone()
+
+    if not resultado:
+        print("Eleitor não encontrado.")
+        cursor.close()
+        conexao.close()
+        return
+
+    cursor.execute(
+        "DELETE FROM eleitores WHERE titulo_eleitor=%s",
+        (titulo,)
+    )
+
+    conexao.commit()
+
+    print("Eleitor removido com sucesso!")
+
+    cursor.close()
+    conexao.close()
