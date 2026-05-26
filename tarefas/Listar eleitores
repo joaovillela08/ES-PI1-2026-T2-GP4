@@ -1,0 +1,25 @@
+def listar_eleitores():
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM eleitores")
+    eleitores = cursor.fetchall()
+
+    if not eleitores:
+        print("Nenhum eleitor cadastrado.")
+        return
+
+    for i, e in enumerate(eleitores, 1):
+
+        print(f"""
+Eleitor {i}
+Nome: {e['nome']}
+CPF: {e['cpf']}
+Título: {e['titulo_eleitor']}
+Mesário: {e['mesario']}
+Status: {"Já votou" if e['status_voto'] else "Não votou"}
+""")
+
+    cursor.close()
+    conexao.close()
