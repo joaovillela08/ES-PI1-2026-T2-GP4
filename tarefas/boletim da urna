@@ -1,0 +1,30 @@
+================= RESULTADOS =================
+def boletim_urna():
+
+    print("\n--- BOLETIM DE URNA ---")
+
+    ordenados = sorted(
+        candidatos.items(),
+        key=lambda x: x[1]["nome"]
+    )
+
+    for numero, dados in ordenados:
+
+        print(
+            f"{dados['nome']} "
+            f"({numero}) - "
+            f"{dados['partido']} "
+            f"| {dados['votos']} votos"
+        )
+
+    numero, vencedor = max(
+        candidatos.items(),
+        key=lambda x: x[1]["votos"]
+    )
+
+    print("\n--- VENCEDOR ---")
+
+    print("Nome:", vencedor["nome"])
+    print("Número:", numero)
+    print("Partido:", vencedor["partido"])
+    print("Votos:", vencedor["votos"])
