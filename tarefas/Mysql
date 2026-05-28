@@ -39,4 +39,32 @@ ADD CONSTRAINT fk_voto_eleitor
 FOREIGN KEY (id_eleitor)
 REFERENCES eleitores(id)
 ON DELETE CASCADE;
+ALTER TABLE eleitores
+MODIFY mesario BOOLEAN NOT NULL;
 
+ALTER TABLE eleitores
+MODIFY mesario TINYINT(1) NOT NULL;
+
+ALTER TABLE eleitores
+ADD protocolo VARCHAR(20);
+
+ALTER TABLE voto
+ADD id_candidato INT,
+ADD FOREIGN KEY (id_candidato) REFERENCES candidatos(id_candidato);
+
+INSERT INTO candidatos (nome, numero, partido)
+VALUES ('Candidato 1', 10, 'ABC');
+
+INSERT INTO candidatos (nome, numero, partido)
+VALUES ('Candidato 2', 20, 'DEF');
+
+INSERT INTO candidatos (nome, numero, partido)
+VALUES ('Candidato 3', 30, 'ABC');
+ALTER TABLE voto
+ADD protocolo VARCHAR(20);
+
+ALTER TABLE eleitores
+DROP COLUMN protocolo;
+
+ALTER TABLE voto
+ADD voto_nulo VARCHAR(20);
