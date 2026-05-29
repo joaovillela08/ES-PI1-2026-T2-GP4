@@ -1,0 +1,32 @@
+def menu_resultados():
+
+    while True:
+
+        print("""
+--- RESULTADOS DA VOTAÇÃO ---
+1 - Boletim de Urna
+2 - Estatística de Comparecimento
+3 - Votos por Partido
+4 - Validação de Integridade
+0 - Voltar
+""")
+
+        op = input("Escolha: ")
+
+        if op == "1":
+            boletim_urna()
+
+        elif op == "2":
+            estatistica_comparecimento()
+
+        elif op == "3":
+            votos_partido()
+
+        elif op == "4":
+            validar_integridade()
+
+        elif op == "0":
+            break
+
+        else:
+            print("Opção inválida.")
