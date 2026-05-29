@@ -1,1 +1,56 @@
+def menu_urna():
 
+    if not zeresima_realizada:
+        print("Erro: Zerésima não realizada.")
+        return
+
+    if not votacao_aberta:
+        print("Sistema fechado.")
+        return
+
+    while True:
+
+        print("""
+--- URNA ---
+1 - Votar
+2 - Encerrar Sistema
+0 - Voltar
+""")
+
+        op = input("Escolha: ")
+
+        if op == "1":
+
+            realizar_voto()
+
+        elif op == "2":
+
+            encerrar_sistema()
+
+            if not votacao_aberta:
+                break
+
+        elif op == "0":
+
+            break
+
+        else:
+
+            print("Opção inválida.")
+def boletim_urna():
+
+    print("\n--- BOLETIM DE URNA ---")
+
+    ordenados = sorted(
+        candidatos.items(),
+        key=lambda x: x[1]["nome"]
+    )
+
+    for numero, dados in ordenados:
+
+        print(
+            f"{dados['nome']} "
+            f"({numero}) - "
+            f"{dados['partido']} "
+            f"| {dados['votos']} votos"
+        )
