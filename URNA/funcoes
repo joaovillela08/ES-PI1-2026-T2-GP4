@@ -1,5 +1,4 @@
 def menu_urna():
-
     if not zeresima_realizada:
         print("Erro: Zerésima não realizada.")
         return
@@ -8,35 +7,31 @@ def menu_urna():
         print("Sistema fechado.")
         return
 
-    while True:
-
-        print("""
+    print("""
 --- URNA ---
 1 - Votar
 2 - Encerrar Sistema
 0 - Voltar
 """)
 
-        op = input("Escolha: ")
+    op = input("Escolha: ")
 
-        if op == "1":
+    if op == "1":
+        realizar_voto()
+        menu_urna()
 
-            realizar_voto()
+    elif op == "2":
+        encerrar_sistema()
+        if votacao_aberta:  # só volta ao menu se ainda estiver aberta
+            menu_urna()
 
-        elif op == "2":
+    elif op == "0":
+        return
 
-            encerrar_sistema()
+    else:
+        print("Opção inválida.")
+        menu_urna()
 
-            if not votacao_aberta:
-                break
-
-        elif op == "0":
-
-            break
-
-        else:
-
-            print("Opção inválida.")
 def boletim_urna():
 
     print("\n--- BOLETIM DE URNA ---")
