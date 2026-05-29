@@ -1,1 +1,94 @@
+def votos_partido():
 
+    partidos = {}
+
+    for d in candidatos.values():
+
+        partido = d["partido"]
+
+        partidos[partido] = partidos.get(partido, 0) + d["votos"]
+
+    print("\n--- VOTOS POR PARTIDO ---")
+
+    for partido, votos in partidos.items():
+        print(f"{partido}: {votos} votos")
+
+    # Verifica se CPF ou título já existem
+    cursor.execute("""
+                   SELECT *
+                   FROM eleitores
+                   WHERE cpf = %s
+                      OR titulo_eleitor = %s
+                   """, (cpf, titulo.strip()))
+
+    eleitor_existente = cursor.fetchone()
+
+    if eleitor_existente:
+        print("\nErro: eleitor já cadastrado!")
+
+      #ele esta adicionado no def cadastrar_eleitor(), onde anteriormente era buscado em lista agora esta esse codigo.
+
+
+
+def validar_titulo(titulo):
+
+    titulo = titulo.strip()
+
+    if not titulo.isdigit() or len(titulo) != 12:
+        return False
+
+    return True
+
+
+
+def validar_integridade():
+
+    votos_urna = sum(
+        d["votos"] for d in candidatos.values()
+    )
+
+    eleitores_votaram = sum(
+        1 for e in eleitores
+        if e["ja_votou"]
+    )
+
+    print("\n--- VALIDAÇÃO DE INTEGRIDADE ---")
+
+    print("Votos registrados:", votos_urna)
+    print("Eleitores com status 'Já votou':", eleitores_votaram)
+
+    if votos_urna == eleitores_votaram:
+        print("Integridade validada!")
+    else:
+        print("Inconsistência encontrada!")
+
+
+
+
+def menu_resultados():
+
+
+
+def validar_cpf(cpf):
+
+    cpf = cpf.replace(".", "").replace("-", "").strip()
+
+    if not cpf.isdigit() or len(cpf) != 11:
+        return False
+
+    if cpf == cpf[0] * 11:
+        return False
+
+    for qtd in [9, 10]:
+
+        soma = sum(
+            int(cpf[i]) * ((qtd + 1) - i)
+            for i in range(qtd)
+        )
+
+        digito = 0 if soma % 11 < 2 else 11 - soma % 11
+
+        if digito != int(cpf[qtd]):
+            return False
+
+    return True
