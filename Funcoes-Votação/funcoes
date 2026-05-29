@@ -65,7 +65,40 @@ def validar_integridade():
 
 
 
-def menu_resultados():
+def menu_votacao():
+    print("""
+--- MENU VOTAÇÃO ---
+1 - Abrir Sistema
+2 - Auditoria
+3 - Acessar Urna
+4 - Exibir Logs
+0 - Voltar
+""")
+
+    op = input("Escolha: ")
+
+    if op == "1":
+        abrir_sistema()
+        menu_votacao()
+
+    elif op == "2":
+        auditoria()
+        menu_votacao()
+
+    elif op == "3":
+        menu_urna()
+        menu_votacao()
+
+    elif op == "4":
+        exibir_logs()
+        menu_votacao()
+
+    elif op == "0":
+        return  # volta para o menu anterior
+
+    else:
+        print("Opção inválida.")
+        menu_votacao()
 
 
 
