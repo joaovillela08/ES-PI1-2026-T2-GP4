@@ -1,3 +1,4 @@
+1-2 horas
 def listar_eleitores():
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
