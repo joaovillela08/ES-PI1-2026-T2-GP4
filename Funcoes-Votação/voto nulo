@@ -1,0 +1,47 @@
+def voto_nulo(eleitor):
+
+    print("\n--- VOTO NULO ---")
+
+    confirmar = input("Deseja confirmar voto NULO? (S/N): ").strip().upper()
+
+    if confirmar != "S":
+        print("Voto cancelado.")
+        return realizar_voto()
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    protocolo = gerar_protocolo("00")
+
+    # salva voto nulo
+    cursor.execute("""
+        INSERT INTO voto (
+            id_eleitor,
+            id_candidato,
+            data_hora,
+            protocolo,
+            voto_nulo
+        )
+        VALUES (%s, NULL, NOW(), %s, %s)
+    """, (
+        eleitor["id"],
+        protocolo,
+        "SIM"
+    ))
+
+    # atualiza status do eleitor
+    cursor.execute("""
+        UPDATE eleitores
+        SET status_voto = 1
+        WHERE id = %s
+    """, (eleitor["id"],))
+
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+    registrar_log("SUCESSO: Voto nulo realizado")
+
+    print("\nVoto nulo registrado com sucesso!")
+    print("Protocolo:", protocolo)
