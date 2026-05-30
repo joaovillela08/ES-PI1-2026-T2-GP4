@@ -649,3 +649,335 @@ def buscar_eleitor(titulo, cpf4, chave_param):
 
     return dv1 == int(titulo[10]) and dv2 == int(titulo[11])
 
+def realizar_voto():
+
+        print("\n--- IDENTIFICAÇÃO DO ELEITOR ---")
+
+        titulo = input("Título de eleitor: ")
+        cpf4 = input("4 primeiros dígitos do CPF: ")
+        chave_input = input("Chave de acesso: ")
+
+        eleitor = buscar_eleitor(titulo, cpf4, chave_input)
+
+        if not eleitor:
+            registrar_log("ALERTA: Tentativa de acesso negado")
+            print("Dados inválidos.")
+            return
+
+        if eleitor["status_voto"] == 1:
+            registrar_log("ALERTA: Tentativa de voto duplo")
+            print("Este eleitor já votou.")
+            return
+
+        print("\n--- CANDIDATOS ---")
+
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM candidatos")
+        lista_candidatos = cursor.fetchall()
+
+        if not lista_candidatos:
+            print("Nenhum candidato cadastrado.")
+            cursor.close()
+            conexao.close()
+            return
+
+        numero = input("Digite o número do candidato: ").strip()
+
+        # Buscar id do candidato
+        cursor.execute("""
+                       SELECT id_candidato
+                       FROM candidatos
+                       WHERE numero = %s
+                       """, (numero,))
+
+
+        resultado = cursor.fetchone()
+
+        if not resultado:
+            print("Candidato inválido.")
+            cursor.close()
+            conexao.close()
+            return voto_nulo(eleitor)
+
+        id_candidato = resultado["id_candidato"]
+
+        print("\n--- CONFIRMAÇÃO ---")
+        print("Número:", numero)
+
+        if input("Confirmar voto? (S/N): ").upper() != "S":
+            print("Voto cancelado.")
+            cursor.close()
+            conexao.close()
+            return
+
+        # Gerar protocolo
+        protocolo = gerar_protocolo(numero)
+        protocolo_criptografado = criptografar(protocolo)
+        protocolo1 = protocolo
+
+        # Inserir voto na tabela voto
+        cursor.execute("""
+                       INSERT INTO voto (id_eleitor,
+                                         id_candidato,
+                                         data_hora,
+                                         protocolo,
+                                         voto_nulo)
+                       VALUES (%s, %s, NOW(), %s, %s)
+                       """, (
+                           eleitor["id"],
+                           id_candidato,
+                           protocolo,
+                           "NAO"
+                       ))
+        # Atualizar eleitor
+        cursor.execute("""
+                       UPDATE eleitores
+                       SET status_voto = 1
+                       WHERE id = %s
+                       """, (eleitor["id"],))
+
+        print("\nVoto registrado com sucesso!")
+        print("Status atualizado para: Já votou")
+        print("Protocolo:", protocolo1)
+
+        conexao.commit()
+
+        cursor.close()
+        conexao.close()
+
+        registrar_log("SUCESSO: Voto realizado com sucesso")
+
+
+# ================= ENCERRAMENTO =================
+
+def encerrar_sistema():
+
+    global votacao_aberta
+
+    print("\n--- ENCERRAMENTO DA VOTAÇÃO ---")
+
+    eleitor = buscar_eleitor(
+        input("Título de eleitor: "),
+        input("4 primeiros dígitos do CPF: "),
+        input("Chave de acesso: ")
+    )
+
+    if not eleitor:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Dados inválidos.")
+        return
+
+    if not eleitor["mesario"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Apenas mesários podem encerrar o sistema.")
+        return
+
+    if input(
+        'Deseja realmente encerrar a votação? (S/N): '
+    ).upper() != "S":
+
+        print("Encerramento cancelado.")
+        return
+
+    if criptografar(
+            input("Digite novamente a chave de acesso: ").strip()
+    ) != eleitor["chave_acesso"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Chave incorreta. Encerramento cancelado.")
+        return
+
+    votacao_aberta = False
+
+    registrar_log(
+        "ENCERRAMENTO: Votação finalizada com sucesso."
+    )
+
+    print("\nSistema encerrado com sucesso!")
+    print("Resultados consolidados.\n")
+
+    auditoria()
+    return menu_principal()
+
+# ================= RESULTADOS =================
+
+def boletim_urna():
+
+    print("\n--- BOLETIM DE URNA ---")
+
+    ordenados = sorted(
+        candidatos.items(),
+        key=lambda x: x[1]["nome"]
+    )
+
+    for numero, dados in ordenados:
+
+        print(
+            f"{dados['nome']} "
+            f"({numero}) - "
+            f"{dados['partido']} "
+            f"| {dados['votos']} votos"
+        )
+
+
+# ================= AUDITORIA =================
+
+def auditoria():
+
+    print("\n--- AUDITORIA ---")
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    print("Sistema aberto:", votacao_aberta)
+    print("Zerésima realizada:", zeresima_realizada)
+
+    cursor.execute("""
+        SELECT 
+            candidatos.numero,
+            candidatos.nome,
+            candidatos.partido,
+            COUNT(voto.id_voto) AS total_votos
+        FROM candidatos
+        LEFT JOIN voto 
+            ON voto.id_candidato = candidatos.id_candidato
+        GROUP BY candidatos.id_candidato
+        ORDER BY candidatos.numero
+    """)
+
+    resultados = cursor.fetchall()
+
+    if not resultados:
+        print("Nenhum voto registrado.")
+
+    for r in resultados:
+        print(
+            f"{r['numero']} - "
+            f"{r['nome']} | "
+            f"Partido: {r['partido']} | "
+            f"Votos: {r['total_votos']}"
+        )
+
+    cursor.close()
+    conexao.close()
+
+
+# ================= URNA =================
+
+def menu_urna():
+    if not zeresima_realizada:
+        print("Erro: Zerésima não realizada.")
+        return
+
+    if not votacao_aberta:
+        print("Sistema fechado.")
+        return
+
+    print("""
+--- URNA ---
+1 - Votar
+2 - Encerrar Sistema
+0 - Voltar
+""")
+
+    op = input("Escolha: ")
+
+    if op == "1":
+        realizar_voto()
+        menu_urna()
+
+    elif op == "2":
+        encerrar_sistema()
+        if votacao_aberta:  # só volta ao menu se ainda estiver aberta
+            menu_urna()
+
+    elif op == "0":
+        return
+
+    else:
+        print("Opção inválida.")
+        menu_urna()
+
+
+# ================= MENU VOTAÇÃO =================
+
+def menu_votacao():
+    print("""
+--- MENU VOTAÇÃO ---
+1 - Abrir Sistema
+2 - Auditoria
+3 - Acessar Urna
+4 - Exibir Logs
+0 - Voltar
+""")
+
+    op = input("Escolha: ")
+
+    if op == "1":
+        abrir_sistema()
+        menu_votacao()
+
+    elif op == "2":
+        auditoria()
+        menu_votacao()
+
+    elif op == "3":
+        menu_urna()
+        menu_votacao()
+
+    elif op == "4":
+        exibir_logs()
+        menu_votacao()
+
+    elif op == "0":
+        return  # volta para o menu anterior
+
+    else:
+        print("Opção inválida.")
+        menu_votacao()
+
+# ================= MENU PRINCIPAL =================
+
+def menu_principal():
+    print("""
+===== SISTEMA ELEITORAL =====
+1 - Gerenciamento
+2 - Votação
+0 - Sair
+""")
+
+    op = input("Escolha: ")
+
+    if op == "1":
+        menu_gerenciamento()
+        menu_principal()
+
+    elif op == "2":
+        menu_votacao()
+        menu_principal()
+
+    elif op == "0":
+        print("Encerrando sistema...")
+
+    else:
+        print("Opção inválida.")
+        menu_principal()
+
+
+# ================= EXECUÇÃO =================
+
+menu_principal()
+
