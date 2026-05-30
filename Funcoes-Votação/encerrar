@@ -1,3 +1,4 @@
+# tarefa feita por Joao Villela, Gabriel e Hyan, aproximadamente 2 horas.
 def encerrar_sistema():
 
     global votacao_aberta
