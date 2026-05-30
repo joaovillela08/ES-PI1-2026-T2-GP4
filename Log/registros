@@ -1,3 +1,5 @@
+eleitores=[]
+mesario=[]
 ARQUIVO_LOG = "logs_ocorrencias.txt"
 
 
