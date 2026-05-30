@@ -1,0 +1,34 @@
+menu_gerenciamento():
+    print("""
+--- MENU GERENCIAMENTO ---
+1 - Cadastrar Eleitor
+2 - Listar Eleitores
+3 - Buscar Eleitor
+4 - Remover Eleitor
+0 - Voltar
+""")
+
+    op = input("Escolha: ")
+
+    if op == "1":
+        cadastrar_eleitor()
+        menu_gerenciamento()
+
+    elif op == "2":
+        listar_eleitores()
+        menu_gerenciamento()
+
+    elif op == "3":
+        buscar_por_titulo()
+        menu_gerenciamento()
+
+    elif op == "4":
+        remover_eleitor()
+        menu_gerenciamento()
+
+    elif op == "0":
+        return
+
+    else:
+        print("Opção inválida.")
+        menu_gerenciamento()
