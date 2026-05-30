@@ -293,5 +293,359 @@ def validar_titulo(titulo):
 
     dv2 = 0 if soma % 11 == 10 else soma % 11
 
+
+
+# ================= CRIPTOGRAFIA =================
+
+caracteres = " " + string.punctuation + string.digits + string.ascii_letters
+N = len(caracteres)
+
+# Chave padrão (matriz 2x2)
+chave = [[3, 5], [2, 7]]
+
+
+def matriz_valida(m):
+    det = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) % N
+    try:
+        pow(det, -1, N)
+        return True
+    except:
+        return False
+
+
+# ---- CRIPTOGRAFAR ----
+# O parâmetro 'm' tem valor padrão = chave global,
+# então pode ser chamado como criptografar(texto) ou criptografar(texto, outra_chave)
+def criptografar(mensagem, m=None):
+    if m is None:
+        m = chave
+    if len(mensagem) % 2 != 0:
+        mensagem += " "
+    resultado = ""
+    for i in range(0, len(mensagem), 2):
+        p1, p2 = caracteres.index(mensagem[i]), caracteres.index(mensagem[i+1])
+        resultado += caracteres[(m[0][0]*p1 + m[0][1]*p2) % N]
+        resultado += caracteres[(m[1][0]*p1 + m[1][1]*p2) % N]
+    return resultado
+
+
+# ---- DESCRIPTOGRAFAR ----
+def descriptografar(cifrado, m=None):
+    if m is None:
+        m = chave
+    det = (m[0][0]*m[1][1] - m[0][1]*m[1][0]) % N
+    d   = pow(det, -1, N)
+    inv = [[ d * m[1][1] % N, (-d * m[0][1]) % N],
+           [(-d * m[1][0]) % N,  d * m[0][0] % N]]
+    return criptografar(cifrado, inv)
+
+
+# ================= GERENCIAMENTO =================
+
+def cadastrar_eleitor():
+
+    print("\n--- CADASTRO DE ELEITOR ---")
+
+    nome = input("Nome completo: ")
+    cpf = input("CPF: ")
+    titulo = input("Título de eleitor: ")
+
+    if not validar_cpf(cpf):
+        print("CPF inválido!")
+        return
+
+    if not validar_titulo(titulo):
+        print("Título inválido!")
+        return
+
+    cpf = cpf.replace(".", "").replace("-", "").strip()
+
+    mesario = input("Atuará como mesário? (S/N): ").upper()
+
+    if mesario not in ["S", "N"]:
+        print("Opção inválida!")
+        return
+
+    mesario_db = 1 if mesario == "S" else 0
+
+    chave_acesso = gerar_codigo(nome)
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    # Verifica se CPF ou título já existem
+    cpf_criptografado = criptografar(cpf)
+    titulo_criptografado = criptografar(titulo.strip())
+
+    cursor.execute("""
+                   SELECT *
+                   FROM eleitores
+                   WHERE cpf = %s
+                      OR titulo_eleitor = %s
+                   """, (cpf_criptografado, titulo_criptografado))
+
+    eleitor_existente = cursor.fetchone()
+
+    if eleitor_existente:
+        print("\nErro: eleitor já cadastrado!")
+
+        cursor.close()
+        conexao.close()
+
+        return
+
+    chave_criptografada = criptografar(chave_acesso)
+
+    cursor.execute("""
+                   INSERT INTO eleitores
+                       (nome, cpf, titulo_eleitor, mesario, chave_acesso, status_voto)
+                   VALUES (%s, %s, %s, %s, %s, %s)
+                   """, (
+                       nome,
+                       cpf_criptografado,
+                       titulo_criptografado,
+                       mesario_db,
+                       chave_criptografada,
+                       False
+                   ))
+
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+    print("\nCadastro realizado com sucesso!")
+    print("Chave de acesso:", chave_acesso)
+
+
+def listar_eleitores():
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM eleitores")
+    eleitores = cursor.fetchall()
+
+    if not eleitores:
+        print("Nenhum eleitor cadastrado.")
+        return
+
+    for i, e in enumerate(eleitores, 1):
+        print(f"""
+    Eleitor {i}
+    Nome: {e['nome']}
+    CPF: {e['cpf']}
+    Título: {e['titulo_eleitor']}
+    Mesário: {e['mesario']}
+    Status: {"Já votou" if e['status_voto'] else "Não votou"}
+    """)
+
+    cursor.close()
+    conexao.close()
+
+
+def buscar_por_titulo():
+
+    print("\n--- BUSCAR ELEITOR ---")
+
+    titulo = input("Título de eleitor: ").strip()
+    titulo_criptografado = criptografar(titulo.strip())
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT * FROM eleitores
+        WHERE titulo_eleitor = %s
+    """, (titulo_criptografado,))
+
+    e = cursor.fetchone()
+
+    cursor.close()
+    conexao.close()
+
+    if not e:
+        print("Eleitor não encontrado.")
+        return
+
+    print(f"""
+Nome: {e['nome']}
+CPF: {e['cpf']}
+Título: {e['titulo_eleitor']}
+Mesário: { "S" if e['mesario'] else "N" }
+Status: {"Já votou" if e['status_voto'] else "Não votou"}
+""")
+
+def remover_eleitor():
+
+    print("\n--- REMOVER ELEITOR ---")
+
+    titulo = input("Título de eleitor: ").strip()
+    titulo_criptografado = criptografar(titulo.strip())
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    # Primeiro verifica se existe
+    cursor.execute(
+        "SELECT id FROM eleitores WHERE titulo_eleitor=%s",
+        (titulo_criptografado,)
+    )
+
+    resultado = cursor.fetchone()
+
+    if not resultado:
+        print("Eleitor não encontrado.")
+        cursor.close()
+        conexao.close()
+        return
+
+    # Se existir, remove
+    cursor.execute(
+        "DELETE FROM eleitores WHERE titulo_eleitor=%s",
+        (titulo_criptografado,)
+    )
+
+    conexao.commit()
+
+    print("Eleitor removido com sucesso!")
+
+    cursor.close()
+    conexao.close()
+
+
+def menu_gerenciamento():
+    print("""
+--- MENU GERENCIAMENTO ---
+1 - Cadastrar Eleitor
+2 - Listar Eleitores
+3 - Buscar Eleitor
+4 - Remover Eleitor
+0 - Voltar
+""")
+
+    op = input("Escolha: ")
+
+    if op == "1":
+        cadastrar_eleitor()
+        menu_gerenciamento()
+
+    elif op == "2":
+        listar_eleitores()
+        menu_gerenciamento()
+
+    elif op == "3":
+        buscar_por_titulo()
+        menu_gerenciamento()
+
+    elif op == "4":
+        remover_eleitor()
+        menu_gerenciamento()
+
+    elif op == "0":
+        return
+
+    else:
+        print("Opção inválida.")
+        menu_gerenciamento()
+
+
+# ================= ABERTURA =================
+
+def abrir_sistema():
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("DELETE FROM voto")
+    cursor.execute("UPDATE eleitores SET status_voto = 0")
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+    global votacao_aberta, zeresima_realizada
+
+    print("\n--- ABERTURA DO SISTEMA ---")
+
+    eleitor = buscar_eleitor(
+        input("Título de eleitor: "),
+        input("4 primeiros dígitos do CPF: "),
+        input("Chave de acesso: ")
+    )
+
+    if not eleitor:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Erro de validação.")
+        return
+
+    if not eleitor["mesario"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Apenas mesários podem abrir o sistema.")
+        return
+
+    for c in candidatos.values():
+        c["votos"] = 0
+
+    votacao_aberta = True
+    zeresima_realizada = True
+
+    registrar_log(
+        "ABERTURA: Votação iniciada com sucesso. Total de votos zerado."
+    )
+
+    print("Sistema aberto com sucesso!")
+
+    print("\n--- ZERÉSIMA ---")
+
+    for numero, dados in candidatos.items():
+
+        print(
+            f"Número: {numero} | "
+            f"{dados['nome']} | "
+            f"Votos: {dados['votos']}"
+        )
+        return menu_urna()
+
+
+# ================= VOTAÇÃO =================
+def buscar_eleitor(titulo, cpf4, chave_param):
+
+    titulo_criptografado = criptografar(titulo.strip())
+    chave_criptografada = criptografar(chave_param.strip())
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT *
+        FROM eleitores
+        WHERE titulo_eleitor = %s
+        AND chave_acesso = %s
+    """, (
+        titulo_criptografado,
+        chave_criptografada
+    ))
+
+    eleitor = cursor.fetchone()
+
+    cursor.close()
+    conexao.close()
+
+    if eleitor is None:
+        return None
+
+    cpf4_criptografado = criptografar(cpf4.strip())
+
+    if eleitor["cpf"].startswith(cpf4_criptografado):
+        return eleitor
+
+    return None
+
     return dv1 == int(titulo[10]) and dv2 == int(titulo[11])
 
