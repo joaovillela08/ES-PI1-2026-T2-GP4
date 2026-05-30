@@ -1,0 +1,59 @@
+def encerrar_sistema():
+
+    global votacao_aberta
+
+    print("\n--- ENCERRAMENTO DA VOTAÇÃO ---")
+
+    eleitor = buscar_eleitor(
+        input("Título de eleitor: "),
+        input("4 primeiros dígitos do CPF: "),
+        input("Chave de acesso: ")
+    )
+
+    if not eleitor:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Dados inválidos.")
+        return
+
+    if not eleitor["mesario"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Apenas mesários podem encerrar o sistema.")
+        return
+
+    if input(
+        'Deseja realmente encerrar a votação? (S/N): '
+    ).upper() != "S":
+
+        print("Encerramento cancelado.")
+        return
+
+    if criptografar(
+            input("Digite novamente a chave de acesso: ").strip()
+    ) != eleitor["chave_acesso"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Chave incorreta. Encerramento cancelado.")
+        return
+
+    votacao_aberta = False
+
+    registrar_log(
+        "ENCERRAMENTO: Votação finalizada com sucesso."
+    )
+
+    print("\nSistema encerrado com sucesso!")
+    print("Resultados consolidados.\n")
+
+    auditoria()
+    return menu_principal()
