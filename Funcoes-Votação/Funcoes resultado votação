@@ -17,20 +17,7 @@ def estatistica_comparecimento():
     print(f"Percentual: {percentual:.2f}%")
 
 
-def votos_partido():
 
-    partidos = {}
-
-    for d in candidatos.values():
-
-        partido = d["partido"]
-
-        partidos[partido] = partidos.get(partido, 0) + d["votos"]
-
-    print("\n--- VOTOS POR PARTIDO ---")
-
-    for partido, votos in partidos.items():
-        print(f"{partido}: {votos} votos")
 def estatistica_comparecimento():
 
     total = len(eleitores)
