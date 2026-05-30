@@ -1,4 +1,4 @@
-
+# tarefa feita por Joao Villela, Gabriel e Hyan, aproximadamente 4 horas.
 def estatistica_comparecimento():
 
     total = len(eleitores)
