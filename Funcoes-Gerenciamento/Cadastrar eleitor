@@ -1,3 +1,4 @@
+3 horas
 def cadastrar_eleitor():
 
     print("\n--- CADASTRO DE ELEITOR ---")
