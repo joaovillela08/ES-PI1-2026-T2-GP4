@@ -1,0 +1,74 @@
+def cadastrar_eleitor():
+
+    print("\n--- CADASTRO DE ELEITOR ---")
+
+    nome = input("Nome completo: ")
+    cpf = input("CPF: ")
+    titulo = input("Título de eleitor: ")
+
+    if not validar_cpf(cpf):
+        print("CPF inválido!")
+        return
+
+    if not validar_titulo(titulo):
+        print("Título inválido!")
+        return
+
+    cpf = cpf.replace(".", "").replace("-", "").strip()
+
+    mesario = input("Atuará como mesário? (S/N): ").upper()
+
+    if mesario not in ["S", "N"]:
+        print("Opção inválida!")
+        return
+
+    mesario_db = 1 if mesario == "S" else 0
+
+    chave_acesso = gerar_codigo(nome)
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    # Verifica se CPF ou título já existem
+    cpf_criptografado = criptografar(cpf)
+    titulo_criptografado = criptografar(titulo.strip())
+
+    cursor.execute("""
+                   SELECT *
+                   FROM eleitores
+                   WHERE cpf = %s
+                      OR titulo_eleitor = %s
+                   """, (cpf_criptografado, titulo_criptografado))
+
+    eleitor_existente = cursor.fetchone()
+
+    if eleitor_existente:
+        print("\nErro: eleitor já cadastrado!")
+
+        cursor.close()
+        conexao.close()
+
+        return
+
+    chave_criptografada = criptografar(chave_acesso)
+
+    cursor.execute("""
+                   INSERT INTO eleitores
+                       (nome, cpf, titulo_eleitor, mesario, chave_acesso, status_voto)
+                   VALUES (%s, %s, %s, %s, %s, %s)
+                   """, (
+                       nome,
+                       cpf_criptografado,
+                       titulo_criptografado,
+                       mesario_db,
+                       chave_criptografada,
+                       False
+                   ))
+
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+    print("\nCadastro realizado com sucesso!")
+    print("Chave de acesso:", chave_acesso)
