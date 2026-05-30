@@ -1,4 +1,4 @@
-3 horas
+tarefa feita por Joao Villela, Hyan e Gabriel aproximadamente 3 horas.
 def cadastrar_eleitor():
 
     print("\n--- CADASTRO DE ELEITOR ---")
