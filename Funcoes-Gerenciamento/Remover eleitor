@@ -1,4 +1,4 @@
-30min-1h
+tarefa feita por Gabriel, aproximadamente 1 horas.
 def remover_eleitor():
 
     print("\n--- REMOVER ELEITOR ---")
