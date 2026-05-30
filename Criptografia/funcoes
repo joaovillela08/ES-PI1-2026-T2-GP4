@@ -1,4 +1,4 @@
-#aproximadamente 2 horas, foram ultilizados videos de codigo de hills e criptografia em python
+#aproximadamente 4 horas, foram ultilizados videos de codigo de hills e criptografia em python
 
 
 caracteres = " " + string.punctuation + string.digits + string.ascii_letters
