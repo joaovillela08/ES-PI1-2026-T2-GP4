@@ -1,3 +1,4 @@
+# tarefa feita por Joao Villela, Gabriel e Hyan, aproximadamente 3 horas.
 def votos_partido():
 
     partidos = {}
