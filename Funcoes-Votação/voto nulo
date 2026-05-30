@@ -1,3 +1,4 @@
+# feito por hyan aproxiadamente 2 horas
 def voto_nulo(eleitor):
 
     print("\n--- VOTO NULO ---")
