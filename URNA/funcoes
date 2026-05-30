@@ -1,3 +1,4 @@
+# tarefa feita por Joao Villela, Gabriel e Hyan, aproximadamente 1 hora.
 def menu_urna():
     if not zeresima_realizada:
         print("Erro: Zerésima não realizada.")
