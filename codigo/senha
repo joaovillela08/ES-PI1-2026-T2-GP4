@@ -1,3 +1,4 @@
+#tarefa com duração de 40 minutos
 def gerar_codigo(nome):
 
     partes = nome.strip().upper().split()
