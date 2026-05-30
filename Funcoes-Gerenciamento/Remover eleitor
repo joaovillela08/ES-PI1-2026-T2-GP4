@@ -1,0 +1,36 @@
+def remover_eleitor():
+
+    print("\n--- REMOVER ELEITOR ---")
+
+    titulo = input("Título de eleitor: ").strip()
+    titulo_criptografado = criptografar(titulo.strip())
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    # Primeiro verifica se existe
+    cursor.execute(
+        "SELECT id FROM eleitores WHERE titulo_eleitor=%s",
+        (titulo_criptografado,)
+    )
+
+    resultado = cursor.fetchone()
+
+    if not resultado:
+        print("Eleitor não encontrado.")
+        cursor.close()
+        conexao.close()
+        return
+
+    # Se existir, remove
+    cursor.execute(
+        "DELETE FROM eleitores WHERE titulo_eleitor=%s",
+        (titulo_criptografado,)
+    )
+
+    conexao.commit()
+
+    print("Eleitor removido com sucesso!")
+
+    cursor.close()
+    conexao.close()
