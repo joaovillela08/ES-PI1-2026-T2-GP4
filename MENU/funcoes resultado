@@ -1,3 +1,4 @@
+# tarefa feita por Joao Villela, Gabriel e Hyan, aproximadamente 30 minutos.
 def menu_resultados():
 
     while True:
