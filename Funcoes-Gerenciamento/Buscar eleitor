@@ -1,0 +1,31 @@
+def buscar_por_titulo():
+
+    print("\n--- BUSCAR ELEITOR ---")
+
+    titulo = input("Título de eleitor: ").strip()
+    titulo_criptografado = criptografar(titulo.strip())
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT * FROM eleitores
+        WHERE titulo_eleitor = %s
+    """, (titulo_criptografado,))
+
+    e = cursor.fetchone()
+
+    cursor.close()
+    conexao.close()
+
+    if not e:
+        print("Eleitor não encontrado.")
+        return
+
+    print(f"""
+Nome: {e['nome']}
+CPF: {e['cpf']}
+Título: {e['titulo_eleitor']}
+Mesário: { "S" if e['mesario'] else "N" }
+Status: {"Já votou" if e['status_voto'] else "Não votou"}
+""")
