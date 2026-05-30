@@ -70,3 +70,64 @@ def validar_integridade():
         print("Integridade validada!")
     else:
         print("Inconsistência encontrada!")
+
+def abrir_sistema():
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("DELETE FROM voto")
+    cursor.execute("UPDATE eleitores SET status_voto = 0")
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+    global votacao_aberta, zeresima_realizada
+
+    print("\n--- ABERTURA DO SISTEMA ---")
+
+    eleitor = buscar_eleitor(
+        input("Título de eleitor: "),
+        input("4 primeiros dígitos do CPF: "),
+        input("Chave de acesso: ")
+    )
+
+    if not eleitor:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Erro de validação.")
+        return
+
+    if not eleitor["mesario"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado"
+        )
+
+        print("Apenas mesários podem abrir o sistema.")
+        return
+
+    for c in candidatos.values():
+        c["votos"] = 0
+
+    votacao_aberta = True
+    zeresima_realizada = True
+
+    registrar_log(
+        "ABERTURA: Votação iniciada com sucesso. Total de votos zerado."
+    )
+
+    print("Sistema aberto com sucesso!")
+
+    print("\n--- ZERÉSIMA ---")
+
+    for numero, dados in candidatos.items():
+
+        print(
+            f"Número: {numero} | "
+            f"{dados['nome']} | "
+            f"Votos: {dados['votos']}"
+        )
+        return menu_urna()
