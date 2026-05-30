@@ -1,0 +1,297 @@
+import random
+import string
+from datetime import datetime
+import mysql.connector
+
+def conectar():
+    return mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='Carotenos130',
+        database='projeto_integrador'
+    )
+
+
+#================== estastitica de comparecimento ========
+
+
+def estatistica_comparecimento():
+
+    total = len(eleitores)
+
+    votaram = sum(
+        1 for e in eleitores
+        if e["ja_votou"]
+    )
+
+    percentual = (votaram / total * 100) if total else 0
+
+    print("\n--- ESTATÍSTICA DE COMPARECIMENTO ---")
+
+    print("Eleitores aptos:", total)
+    print("Compareceram:", votaram)
+    print(f"Percentual: {percentual:.2f}%")
+
+
+
+
+#================== votos por partido ========
+
+
+
+def votos_partido():
+
+    partidos = {}
+
+    for d in candidatos.values():
+
+        partido = d["partido"]
+
+        partidos[partido] = partidos.get(partido, 0) + d["votos"]
+
+    print("\n--- VOTOS POR PARTIDO ---")
+
+    for partido, votos in partidos.items():
+        print(f"{partido}: {votos} votos")
+
+
+#================== validar integridade ========
+
+
+def validar_integridade():
+
+    votos_urna = sum(
+        d["votos"] for d in candidatos.values()
+    )
+
+    eleitores_votaram = sum(
+        1 for e in eleitores
+        if e["ja_votou"]
+    )
+
+    print("\n--- VALIDAÇÃO DE INTEGRIDADE ---")
+
+    print("Votos registrados:", votos_urna)
+    print("Eleitores com status 'Já votou':", eleitores_votaram)
+
+    if votos_urna == eleitores_votaram:
+        print("Integridade validada!")
+    else:
+        print("Inconsistência encontrada!")
+
+
+
+
+
+
+
+
+
+
+#================== voto nulo ========
+def voto_nulo(eleitor):
+
+    print("\n--- VOTO NULO ---")
+
+    confirmar = input("Deseja confirmar voto NULO? (S/N): ").strip().upper()
+
+    if confirmar != "S":
+        print("Voto cancelado.")
+        return realizar_voto()
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    protocolo = gerar_protocolo("00")
+
+    # salva voto nulo
+    cursor.execute("""
+        INSERT INTO voto (
+            id_eleitor,
+            id_candidato,
+            data_hora,
+            protocolo,
+            voto_nulo
+        )
+        VALUES (%s, NULL, NOW(), %s, %s)
+    """, (
+        eleitor["id"],
+        protocolo,
+        "SIM"
+    ))
+
+    # atualiza status do eleitor
+    cursor.execute("""
+        UPDATE eleitores
+        SET status_voto = 1
+        WHERE id = %s
+    """, (eleitor["id"],))
+
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+    registrar_log("SUCESSO: Voto nulo realizado")
+
+    print("\nVoto nulo registrado com sucesso!")
+    print("Protocolo:", protocolo)
+# ================= LOGS =================
+eleitores=[]
+mesario=[]
+ARQUIVO_LOG = "logs_ocorrencias.txt"
+
+
+def registrar_log(mensagem):
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(ARQUIVO_LOG, "a", encoding="utf-8") as log:
+
+        log.write(f"[{timestamp}] {mensagem}\n")
+
+
+def exibir_logs():
+
+    print("\n--- ACESSO AOS LOGS ---")
+
+    eleitor = buscar_eleitor(
+        input("Título de eleitor: "),
+        input("4 primeiros dígitos do CPF: "),
+        input("Chave de acesso: ")
+    )
+
+    if not eleitor:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso negado aos logs"
+        )
+
+        print("Dados inválidos.")
+        return
+
+    if not eleitor["mesario"]:
+
+        registrar_log(
+            "ALERTA: Tentativa de acesso não autorizado aos logs"
+        )
+
+        print("Apenas mesários podem acessar os logs.")
+        return
+
+    print("\n--- LOGS DE OCORRÊNCIAS ---")
+
+    try:
+
+        with open(ARQUIVO_LOG, "r", encoding="utf-8") as log:
+
+            conteudo = log.read()
+
+            if conteudo.strip() == "":
+                print("Nenhum log registrado.")
+            else:
+                print(conteudo)
+
+    except FileNotFoundError:
+
+        print("Arquivo de logs não encontrado.")
+
+
+# ================= DADOS =================
+
+
+candidatos = {
+    "10": {"nome": "Candidato 1", "partido": "ABC", "votos": 0},
+    "20": {"nome": "Candidato 2", "partido": "DEF", "votos": 0},
+    "30": {"nome": "Candidato 3", "partido": "ABC", "votos": 0}
+}
+
+votacao_aberta = False
+zeresima_realizada = False
+
+
+# ================= AUXILIARES =================
+def gerar_protocolo(numero_candidato):
+
+    letras = ''.join(
+        random.choices(string.ascii_uppercase, k=2)
+    )
+
+    numeros = ''.join(
+        random.choices(string.digits, k=5)
+    )
+
+    return f"V{letras}26{numero_candidato}{numeros}"
+
+
+def gerar_codigo(nome):
+
+    partes = nome.strip().upper().split()
+
+    # Pega as 2 primeiras letras do primeiro nome
+    primeira_parte = partes[0][:2]
+
+    # Pega a primeira letra do segundo nome
+    if len(partes) > 1:
+        segunda_parte = partes[1][0]
+    else:
+        segunda_parte = "X"  # caso a pessoa tenha apenas um nome
+
+    # Gera 4 números aleatórios
+    numeros = ''.join(random.choices(string.digits, k=4))
+
+    # Junta tudo
+    codigo = primeira_parte + segunda_parte + numeros
+
+    return codigo
+
+
+# ================= VALIDAÇÕES =================
+
+def validar_cpf(cpf):
+
+    cpf = cpf.replace(".", "").replace("-", "").strip()
+
+    if not cpf.isdigit() or len(cpf) != 11:
+        return False
+
+    if cpf == cpf[0] * 11:
+        return False
+
+    for qtd in [9, 10]:
+
+        soma = sum(
+            int(cpf[i]) * ((qtd + 1) - i)
+            for i in range(qtd)
+        )
+
+        digito = 0 if soma % 11 < 2 else 11 - soma % 11
+
+        if digito != int(cpf[qtd]):
+            return False
+
+    return True
+
+
+def validar_titulo(titulo):
+
+    titulo = titulo.strip()
+
+    if not titulo.isdigit() or len(titulo) != 12:
+        return False
+
+    numero = titulo[:8]
+    uf = titulo[8:10]
+
+    pesos = [2, 3, 4, 5, 6, 7, 8, 9]
+
+    soma = sum(int(numero[i]) * pesos[i] for i in range(8))
+
+    dv1 = 0 if soma % 11 == 10 else soma % 11
+
+    soma = int(uf[0]) * 7 + int(uf[1]) * 8 + dv1 * 9
+
+    dv2 = 0 if soma % 11 == 10 else soma % 11
+
+    return dv1 == int(titulo[10]) and dv2 == int(titulo[11])
+
