@@ -1,4 +1,4 @@
-tarefa feita por Gabriel, aproximadamente 1 horas.
+tarefa feita por Gabriel, aproximadamente 2 horas.
 def remover_eleitor():
 
     print("\n--- REMOVER ELEITOR ---")
